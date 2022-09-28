@@ -1,54 +1,107 @@
-import { AnimatePresence, View } from "moti";
-import { useReducer } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import * as React from 'react';
+import { StatusBar, FlatList, Image, Animated, Text, View, Dimensions, StyleSheet, TouchableOpacity } from 'react-native';
+const { width, height } = Dimensions.get('screen');
 
-function Shape({ bg }) {
+// Images Links
+const data = [
+  'https://cdn.dribbble.com/users/3281732/screenshots/11192830/media/7690704fa8f0566d572a085637dd1eee.jpg?compress=1&resize=1200x1200',
+  'https://cdn.dribbble.com/users/3281732/screenshots/13130602/media/592ccac0a949b39f058a297fd1faa38e.jpg?compress=1&resize=1200x1200',
+  'https://cdn.dribbble.com/users/3281732/screenshots/9165292/media/ccbfbce040e1941972dbc6a378c35e98.jpg?compress=1&resize=1200x1200',
+  'https://cdn.dribbble.com/users/3281732/screenshots/11205211/media/44c854b0a6e381340fbefe276e03e8e4.jpg?compress=1&resize=1200x1200',
+  'https://cdn.dribbble.com/users/3281732/screenshots/7003560/media/48d5ac3503d204751a2890ba82cc42ad.jpg?compress=1&resize=1200x1200',
+  'https://cdn.dribbble.com/users/3281732/screenshots/6727912/samji_illustrator.jpeg?compress=1&resize=1200x1200',
+  'https://cdn.dribbble.com/users/3281732/screenshots/13661330/media/1d9d3cd01504fa3f5ae5016e5ec3a313.jpg?compress=1&resize=1200x1200'
+
+];
+
+// Default Height & Width
+const imageW = width * 0.7;
+const imageH = imageW * 1.54;
+
+export default () => {
+
+  // refference to the animated flatlist
+  // When Ever the component re render its remain same not lose state
+  const scrollX = React.useRef(new Animated.Value(0)).current
+
   return (
-    <View
-      from={{
-        opacity: 0,
-        scale: 0.5,
-      }}
-      animate={{
-        opacity: 1,
-        scale: 1,
-      }}
-      exit={{
-        opacity: 0,
-        scale: 0.9,
-      }}
-      style={[styles.shape, { backgroundColor: bg }]}
-    />
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <StatusBar hidden />
+      <View
+        // Covers Whole Screen
+        style={StyleSheet.absoluteFillObject}
+      >
+        {/* Loop through Each Image and Set in BG for Blur Imaes Background */}
+        {data.map((image, index) => {
+          const inputRange = [
+            // Next
+            (index - 1) * width,
+            // Current
+            index * width,
+            // Previous 
+            (index + 1) * width
+          ]
+
+          const opacity = scrollX.interpolate({
+            inputRange,
+            outputRange: [0, 1, 0]
+          })
+          return <Animated.Image
+            key={`image-${index}`}
+            source={{ uri: image }}
+            style={[
+              // Covers Whole Container
+              StyleSheet.absoluteFillObject,
+              {
+                opacity
+              }
+            ]}
+            blurRadius={50}
+          />
+        })}
+      </View>
+      <Animated.FlatList
+        data={data}
+        onScroll={
+          Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: true }
+          )
+        }
+        keyExtractor={(_, index) => index.toString()}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        pagingEnabled
+        renderItem={({ item }) => {
+          return (
+            <View 
+            style={{ 
+              width, 
+              justifyContent: "center", 
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOpacity: 0.5,
+              shadowOffset: {
+                width: 0,
+                height: 0,
+              },
+              shadowRadius: 20,
+              elevation: 20
+              }}
+              >
+              <Image
+                source={{ uri: item }}
+                style={{
+                  width: imageW,
+                  height: imageH,
+                  resizeMode: "cover",
+                  borderRadius: 16
+                }}
+              />
+            </View>
+          )
+        }}
+      />
+    </View>
   );
-}
-
-export default function App() {
-  const [visible, toggle] = useReducer((s) => !s, true);
-
-  return (
-    <Pressable onPress={toggle} style={styles.container}>
-      <AnimatePresence exitBeforeEnter>
-        {visible && <Shape bg="hotpink" key="hotpink" />}
-        {!visible && <Shape bg="cyan" key="cyan" />}
-      </AnimatePresence>
-    </Pressable>
-  );
-}
-
-const styles = StyleSheet.create({
-  shape: {
-    justifyContent: "center",
-    height: 250,
-    width: 250,
-    borderRadius: 25,
-    marginRight: 10,
-    backgroundColor: "white",
-  },
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    backgroundColor: "#9c1aff",
-  },
-});
+};
